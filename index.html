@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mói Studio - Cases</title>
+<meta property="og:title" content="Mói Studio - Cases">
+<meta property="og:description" content="Portfólio de cases do Mói Studio.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://moistudio.com.br/cases/">
+<meta property="og:image" content="https://moistudio.com.br/cases/img/01-capa.png">
+<style>
+  @font-face{
+    font-family:'PP Monument Extended';
+    src:url('fonts-web/PPMonumentExtended-Regular.woff2') format('woff2');
+    font-weight:400;
+    font-style:normal;
+    font-display:swap;
+  }
+  @font-face{
+    font-family:'PP Monument Extended';
+    src:url('fonts-web/PPMonumentExtended-Black.woff2') format('woff2');
+    font-weight:800;
+    font-style:normal;
+    font-display:swap;
+  }
+  :root{
+    --green:#5CFFA6;
+    --bg:#0a0a0a;
+    --ui:rgba(255,255,255,.9);
+    --ui-dim:rgba(255,255,255,.45);
+    --panel:rgba(20,20,20,.85);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;background:var(--bg);
+    font-family:'PP Monument Extended',-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    overflow:hidden;
+  }
+  #app{
+    position:relative;
+    width:100%;height:100%;
+    background:var(--bg);
+    overflow:hidden;
+  }
+  #stage{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:#000;
+    cursor:pointer;
+    user-select:none;
+  }
+  #stage img{
+    max-width:100%;max-height:100%;
+    width:auto;height:auto;
+    display:block;
+  }
+  #hotspots{
+    position:absolute;
+    /* sized to match the rendered image via JS */
+    pointer-events:none;
+    z-index:10;
+  }
+  .hotspot{
+    position:absolute;
+    pointer-events:auto;
+    cursor:pointer;
+    background:transparent;
+    border-radius:8px;
+    transition:background .15s ease;
+  }
+  .hotspot:hover{
+    background:rgba(92,255,166,.12);
+    box-shadow:inset 0 0 0 1px rgba(92,255,166,.5);
+  }
+
+  /* top bar */
+  #topbar{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 28px;
+    z-index:20;
+    pointer-events:none;
+    background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent);
+  }
+  #topbar > *{pointer-events:auto;}
+  #logo{
+    font-weight:800;letter-spacing:.5px;color:var(--ui);
+    font-size:14px;text-transform:uppercase;
+    cursor:pointer;
+    display:flex;align-items:center;gap:8px;
+  }
+  #logo .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+  #meta{
+    color:var(--ui-dim);
+    font-size:12px;letter-spacing:.4px;
+    text-align:center;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  #meta b{color:var(--ui);font-weight:800;}
+  #topright{display:flex;gap:10px;}
+  .iconbtn{
+    width:38px;height:38px;border-radius:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);
+    color:var(--ui);
+    cursor:pointer;
+    font-size:15px;
+    backdrop-filter:blur(6px);
+  }
+  .iconbtn:hover{background:rgba(255,255,255,.16);}
+
+  #btn-menu{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 24px;
+    border:0.5px solid rgba(255,255,255,.25);
+    background:transparent;
+    color:var(--ui);
+    font-family:inherit;
+    font-weight:800;
+    font-size:14px;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  #btn-menu:hover{background:rgba(255,255,255,.08);}
+  .grid-icon{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,1fr);
+    gap:2px;
+    width:13px;height:13px;
+    flex-shrink:0;
+  }
+  .grid-icon i{background:var(--ui);display:block;}
+
+  /* bottom bar */
+  #bottombar{
+    position:absolute;bottom:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 28px;
+    z-index:20;
+    pointer-events:none;
+    background:linear-gradient(to top, rgba(0,0,0,.6), transparent);
+  }
+  #bottombar > *{pointer-events:auto;}
+  #progress{
+    flex:1;
+    display:flex;gap:4px;
+    margin:0 24px;
+    max-width:600px;
+  }
+  .seg{
+    flex:1;height:3px;border-radius:2px;
+    background:rgba(255,255,255,.15);
+    overflow:hidden;
+  }
+  .seg i{
+    display:block;height:100%;width:100%;
+    background:var(--green);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .15s linear;
+  }
+  #navbtns{display:flex;gap:10px;}
+
+  /* menu overlay */
+  #menu{
+    position:absolute;inset:0;
+    background:rgba(8,8,8,.97);
+    z-index:50;
+    display:none;
+    overflow-y:auto;
+    padding:80px 40px 60px;
+  }
+  #menu.open{display:block;}
+  #menu-close{
+    position:absolute;top:22px;right:28px;z-index:51;
+  }
+  .cat-block{max-width:1200px;margin:0 auto 48px;}
+  .cat-title{
+    display:flex;align-items:baseline;gap:12px;
+    color:#fff;font-size:22px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.5px;
+    margin-bottom:16px;
+    border-bottom:1px solid rgba(255,255,255,.12);
+    padding-bottom:10px;
+  }
+  .cat-title span{color:var(--green);font-size:14px;font-weight:800;}
+  .thumb-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:12px;
+  }
+  .thumb{
+    cursor:pointer;
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    position:relative;
+    background:#111;
+    aspect-ratio:16/9;
+  }
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s ease;}
+  .thumb:hover img{transform:scale(1.05);}
+  .thumb .lbl{
+    position:absolute;left:0;right:0;bottom:0;
+    font-size:10px;color:#fff;
+    background:linear-gradient(to top, rgba(0,0,0,.85), transparent);
+    padding:16px 8px 6px;
+    text-transform:uppercase;letter-spacing:.3px;
+  }
+
+  kbd{
+    background:rgba(255,255,255,.1);
+    border-radius:3px;padding:1px 5px;
+    font-size:11px;
+  }
+
+  @media (max-width:640px){
+    #meta{display:none;}
+    #progress{margin:0 12px;}
+    .cat-title{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="stage">
+    <img id="frame-img" src="" alt="">
+    <div id="hotspots"></div>
+  </div>
+
+  <div id="topbar">
+    <div id="logo" onclick="goTo(0)"><span class="dot"></span>MÓI — CASES</div>
+    <div id="meta"><b id="meta-cat">—</b><span id="meta-slide">—</span></div>
+    <div id="topright">
+      <button id="btn-menu" title="Abrir menu (M)">
+        <span class="grid-icon"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        Index
+      </button>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <div id="progress"></div>
+    <div id="navbtns">
+      <div class="iconbtn" id="btn-prev" title="Anterior (←)">&#8592;</div>
+      <div class="iconbtn" id="btn-next" title="Próximo (→)">&#8594;</div>
+    </div>
+  </div>
+
+  <div id="menu">
+    <div class="iconbtn" id="menu-close" onclick="closeMenu()">&#10005;</div>
+    <div id="menu-content"></div>
+  </div>
+</div>
+
+<script>
+// ---- slide data (matches Figma "Cases Moi" canvas order) ----
+const CATS = [
+  { key:'intro', label:'Intro', slides:[
+    {f:'01-capa.png', label:'Capa'},
+    {f:'02-hi.png', label:'Hi'},
+    {f:'03-quemsomos.png', label:'Quem somos'},
+    {f:'04-bignumbers.png', label:'Números importam'},
+    {f:'05-partners.png', label:'Parceiros'},
+    {f:'06-processos.png', label:'Processos'},
+    {f:'07-index.png', label:'Índice'},
+  ]},
+  { key:'apps', label:'Apps', slides:[
+    {f:'08-apps-cover.png', label:'Capa — Apps'},
+    {f:'09-apps-s3bank-01.png', label:'S3 Bank 01'},
+    {f:'10-apps-s3bank-02.png', label:'S3 Bank 02'},
+    {f:'11-apps-gndi-01.png', label:'GNDI 01'},
+    {f:'12-apps-gndi-02.png', label:'GNDI 02'},
+    {f:'13-apps-dropx-01.png', label:'Drop-X 01'},
+    {f:'14-apps-dropx-02.png', label:'Drop-X 02'},
+    {f:'15-apps-euprotegido-01.png', label:'Eu Protegido 01'},
+    {f:'16-apps-euprotegido-02.png', label:'Eu Protegido 02'},
+    {f:'17-apps-ipiranga-01.png', label:'Ipiranga 01'},
+    {f:'18-apps-ipiranga-02.png', label:'Ipiranga 02'},
+  ]},
+  { key:'sites', label:'Sites', slides:[
+    {f:'19-sites-cover.png', label:'Capa — Sites'},
+    {f:'20-sites-ftd-01.png', label:'FTD 01'},
+    {f:'21-sites-ftd-02.png', label:'FTD 02'},
+    {f:'22-sites-bancobs2-01.png', label:'Banco BS2 01'},
+    {f:'23-sites-bancobs2-02.png', label:'Banco BS2 02'},
+    {f:'24-sites-beegin-01.png', label:'Beegin 01'},
+    {f:'25-sites-beegin-02.png', label:'Beegin 02'},
+    {f:'26-sites-keynapse-01.png', label:'Keynapse 01'},
+    {f:'27-sites-keynapse-02.png', label:'Keynapse 02'},
+    {f:'28-sites-fintecs-01.png', label:'Fintecs 01'},
+    {f:'29-sites-fintecs-02.png', label:'Fintecs 02'},
+    {f:'29a-sites-aurora-01.png', label:'Aurora Inova 01'},
+    {f:'29b-sites-aurora-02.png', label:'Aurora Inova 02'},
+  ]},
+  { key:'sistemas', label:'Sistemas Web', slides:[
+    {f:'30-sistemas-cover.png', label:'Capa — Sistemas'},
+    {f:'31-sistemas-mpweek-01.png', label:'MPWeek 01'},
+    {f:'32-sistemas-mpweek-02.png', label:'MPWeek 02'},
+    {f:'33-sistemas-giga-01.png', label:'Giga Consult 01'},
+    {f:'34-sistemas-giga-02.png', label:'Giga Consult 02'},
+    {f:'35-sistemas-saude-01.png', label:'Saúde Controle 01'},
+    {f:'36-sistemas-saude-02.png', label:'Saúde Controle 02'},
+  ]},
+  { key:'games', label:'Jogos Educativos', slides:[
+    {f:'37-games-cover.png', label:'Capa — Jogos'},
+    {f:'38-games-fabricadeapps.png', label:'Fábrica de Apps'},
+    {f:'39-games-microscopio.png', label:'Microscópio'},
+    {f:'40-games-george.png', label:'George Orwell'},
+  ]},
+  { key:'branding', label:'Branding', slides:[
+    {f:'41-branding-cover.png', label:'Capa — Branding'},
+    {f:'42-branding-seufit.png', label:'SeuFit'},
+    {f:'43-branding-fintecs.png', label:'Fintecs'},
+    {f:'44-branding-xipp.png', label:'Xipp'},
+    {f:'45-branding-gigaconsult.png', label:'Gigaconsult'},
+    {f:'46-branding-aurora.png', label:'Aurora'},
+  ]},
+  { key:'fim', label:'Fim', slides:[
+    {f:'47-fim.png', label:'Fim'},
+  ]},
+];
+
+// flatten into master sequence
+const SLIDES = [];
+CATS.forEach(cat=>{
+  cat.slides.forEach((s,i)=>{
+    SLIDES.push({file:'img/'+s.f, label:s.label, catKey:cat.key, catLabel:cat.label, catIndex:i, catCount:cat.slides.length});
+  });
+});
+
+// index hotspots -> category cover slide indices, positions in % over the image
+// measured on the 07-index.png (1400x788) list box
+const INDEX_SLIDE = 6; // 0-based index of 07-index.png in SLIDES
+const CAT_START = {}; // catKey -> first slide index in SLIDES
+{
+  let acc = 0;
+  CATS.forEach(cat=>{ CAT_START[cat.key] = acc; acc += cat.slides.length; });
+}
+const INDEX_HOTSPOTS = [
+  { top:26.85, left:59.38, width:31.04, height:8.52, target:CAT_START['apps'] },
+  { top:36.30, left:59.38, width:31.04, height:8.52, target:CAT_START['sites'] },
+  { top:45.74, left:59.38, width:31.04, height:8.52, target:CAT_START['sistemas'] },
+  { top:55.19, left:59.38, width:31.04, height:8.52, target:CAT_START['games'] },
+  { top:64.63, left:59.38, width:31.04, height:8.52, target:CAT_START['branding'] },
+];
+
+// external "visit site" links overlaid on individual case slides — position
+// in % measured directly on each slide's own image, opens in a new tab
+const SLIDE_LINKS = {
+  '20-sites-ftd-01.png': [
+    { top:85.92, left:3.39, width:21.20, height:4.18, url:'https://portalconteudoaberto.com.br/' }
+  ],
+  '26-sites-keynapse-01.png': [
+    { top:87.04, left:3.39, width:13.28, height:2.78, url:'https://www.keynapse.com.br' }
+  ],
+  '28-sites-fintecs-01.png': [
+    { top:87.04, left:3.39, width:12.86, height:2.78, url:'https://fintecs.com.br/' }
+  ],
+  '29a-sites-aurora-01.png': [
+    { top:87.04, left:3.39, width:14.11, height:2.78, url:'https://aurorainova.com/' }
+  ],
+  '38-games-fabricadeapps.png': [
+    { top:83.33, left:3.70, width:12.76, height:3.43, url:'https://www.youtube.com/watch?v=SolDtEfa9MM' }
+  ],
+  '39-games-microscopio.png': [
+    { top:83.33, left:3.70, width:12.76, height:3.43, url:'https://youtu.be/6a_M4YuMNEw' }
+  ],
+  '47-fim.png': [
+    { top:92.31, left:43.23, width:13.44, height:2.87, url:'https://moistudio.com.br' }
+  ],
+};
+
+let current = 0;
+
+function render(){
+  const s = SLIDES[current];
+  const img = document.getElementById('frame-img');
+  img.src = s.file;
+  img.alt = s.label;
+  document.getElementById('meta-cat').textContent = s.catLabel.toUpperCase();
+  document.getElementById('meta-slide').textContent = s.label + '  •  ' + (s.catIndex+1) + '/' + s.catCount;
+  document.title = s.label + ' — Cases Mói';
+
+  renderProgress();
+  renderHotspots();
+  history.replaceState(null, '', '#' + current);
+}
+
+function renderProgress(){
+  const bar = document.getElementById('progress');
+  bar.innerHTML = '';
+  const s = SLIDES[current];
+  const cat = CATS.find(c=>c.key===s.catKey);
+  cat.slides.forEach((_, i)=>{
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    const fill = document.createElement('i');
+    fill.style.transform = 'scaleX(' + (i <= s.catIndex ? 1 : 0) + ')';
+    seg.appendChild(fill);
+    bar.appendChild(seg);
+  });
+}
+
+function renderHotspots(){
+  const wrap = document.getElementById('hotspots');
+  wrap.innerHTML = '';
+  const img = document.getElementById('frame-img');
+
+  function place(){
+    const r = img.getBoundingClientRect();
+    wrap.style.left = r.left + 'px';
+    wrap.style.top = r.top + 'px';
+    wrap.style.width = r.width + 'px';
+    wrap.style.height = r.height + 'px';
+  }
+
+  if (current === INDEX_SLIDE){
+    INDEX_HOTSPOTS.forEach(h=>{
+      const div = document.createElement('div');
+      div.className = 'hotspot';
+      div.style.top = h.top + '%';
+      div.style.left = h.left + '%';
+      div.style.width = h.width + '%';
+      div.style.height = h.height + '%';
+      div.onclick = (e)=>{ e.stopPropagation(); goTo(h.target); };
+      wrap.appendChild(div);
+    });
+  }
+
+  const s = SLIDES[current];
+  const fileName = s.file.replace('img/', '');
+  const links = SLIDE_LINKS[fileName];
+  if (links){
+    links.forEach(l=>{
+      const a = document.createElement('a');
+      a.className = 'hotspot';
+      a.href = l.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.title = l.url;
+      a.style.top = l.top + '%';
+      a.style.left = l.left + '%';
+      a.style.width = l.width + '%';
+      a.style.height = l.height + '%';
+      a.onclick = (e)=>{ e.stopPropagation(); };
+      wrap.appendChild(a);
+    });
+  }
+
+  if (img.complete) place(); else img.onload = place;
+  window.addEventListener('resize', place);
+}
+
+function goTo(i){
+  current = Math.max(0, Math.min(SLIDES.length-1, i));
+  render();
+}
+function next(){ if(current < SLIDES.length-1) goTo(current+1); else goTo(0); }
+function prev(){ if(current > 0) goTo(current-1); }
+
+document.getElementById('stage').addEventListener('click', (e)=>{
+  const rect = document.getElementById('stage').getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  if (x < rect.width * 0.5) prev(); else next();
+});
+document.getElementById('btn-next').onclick = (e)=>{e.stopPropagation();next();};
+document.getElementById('btn-prev').onclick = (e)=>{e.stopPropagation();prev();};
+
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'ArrowRight') next();
+  else if (e.key === 'ArrowLeft') prev();
+  else if (e.key === 'Escape') closeMenu();
+  else if (e.key.toLowerCase() === 'm') openMenu();
+});
+
+// ---- menu ----
+function openMenu(){
+  const content = document.getElementById('menu-content');
+  content.innerHTML = '';
+  CATS.forEach(cat=>{
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    const title = document.createElement('div');
+    title.className = 'cat-title';
+    title.innerHTML = cat.label + ' <span>' + cat.slides.length + ' telas</span>';
+    block.appendChild(title);
+    const grid = document.createElement('div');
+    grid.className = 'thumb-grid';
+    cat.slides.forEach((s, i)=>{
+      const globalIndex = CAT_START[cat.key] + i;
+      const t = document.createElement('div');
+      t.className = 'thumb';
+      t.innerHTML = '<img loading="lazy" src="img/'+s.f+'"><div class="lbl">'+s.label+'</div>';
+      t.onclick = ()=>{ goTo(globalIndex); closeMenu(); };
+      grid.appendChild(t);
+    });
+    block.appendChild(grid);
+    content.appendChild(block);
+  });
+  document.getElementById('menu').classList.add('open');
+}
+function closeMenu(){
+  document.getElementById('menu').classList.remove('open');
+}
+document.getElementById('btn-menu').onclick = (e)=>{ e.stopPropagation(); openMenu(); };
+
+// init from hash if present
+(function init(){
+  const h = parseInt(location.hash.replace('#',''), 10);
+  if (!isNaN(h) && h >= 0 && h < SLIDES.length) current = h;
+  render();
+})();
+</script>
+</body>
+</html>
